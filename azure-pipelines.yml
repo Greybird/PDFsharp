@@ -4,32 +4,64 @@
 # https://docs.microsoft.com/azure/devops/pipelines/apps/aspnet/build-aspnet-4
 
 trigger:
-- master
+- fork/younited
 
 pool:
-  # vmImage: 'windows-latest'
-  name: Default
+  name: Pool-Agent-windows
 
 variables:
-  solution: '**/*.sln'
+  solution: 'PdfSharp.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
 steps:
-- task: NuGetToolInstaller@1
+- checkout: self
+  fetchDepth: 0
+  persistCredentials: true
 
-- task: NuGetCommand@2
+- task: UseDotNet@2
+  displayName: "use .NET Core sdk 6.x"
   inputs:
-    restoreSolution: '$(solution)'
+    version: "6.x"
 
-- task: VSBuild@1
+- task: UseDotNet@2
+  displayName: "use .NET Core sdk 8.x"
   inputs:
-    solution: '$(solution)'
-    msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:PackageLocation="$(build.artifactStagingDirectory)"'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
+    version: "8.x"
 
-- task: VSTest@2
+- task: PowerShell@2
+  displayName: "download assets"
   inputs:
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
+    pwsh: true
+    filePath: '.\dev\download-assets.ps1'
+
+- task: DotNetCoreCLI@2
+  displayName: "dotnet restore"
+  inputs:
+    command: restore
+    projects: '$(solution)'
+    feedsToUse: select
+    vstsFeed: "8e657a83-c183-46fc-b69d-181ce259b56b"
+
+- task: DotNetCoreCLI@2
+  displayName: "dotnet build"
+  inputs:
+    command: build
+    projects: '$(solution)'
+    arguments: --no-restore --configuration $(buildConfiguration) --property:Platform="$(buildPlatform)"
+
+- task: DotNetCoreCLI@2
+  displayName: "dotnet test"
+  inputs:
+    command: test
+    projects: '$(solution)'
+    arguments: --no-restore --no-build --configuration $(buildConfiguration) --property:Platform="$(buildPlatform)"
+    continueOnError: true
+
+- task: DotNetCoreCLI@2
+  displayName: "dotnet push"
+  inputs:
+    command: push
+    packagesToPush: "**/Yuc.PDFsharp*.nupkg"
+    publishVstsFeed: "8e657a83-c183-46fc-b69d-181ce259b56b"
+
