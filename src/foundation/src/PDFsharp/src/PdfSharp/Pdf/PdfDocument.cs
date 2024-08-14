@@ -388,11 +388,11 @@ namespace PdfSharp.Pdf
         /// </summary>
         internal override void PrepareForSave()
         {
+#if false
             PdfDocumentInformation info = Info;
 
             // The Creator is called 'Application' in Acrobat.
             // The Producer is call "Created by" in Acrobat.
-
             // Set Creator if value is undefined. This is the 'application' in Adobe Reader.
             if (info.Elements[PdfDocumentInformation.Keys.Creator] is null)
                 info.Creator = PdfSharpProductVersionInformation.Producer;
@@ -416,7 +416,7 @@ namespace PdfSharp.Pdf
                     producer = $"{pdfProducer} (Original: {producer})";
             }
             info.Elements.SetString(PdfDocumentInformation.Keys.Producer, producer);
-
+#endif
             // Prepare used fonts.
             _fontTable?.PrepareForSave();
 
