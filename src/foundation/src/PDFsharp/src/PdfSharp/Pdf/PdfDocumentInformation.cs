@@ -98,7 +98,7 @@ namespace PdfSharp.Pdf
         /// <summary>
         /// Predefined keys of this dictionary.
         /// </summary>
-        internal sealed class Keys : KeysBase
+        public sealed class Keys : KeysBase
         {
             /// <summary>
             /// (Optional; PDF 1.1) The document’s title.
@@ -162,7 +162,7 @@ namespace PdfSharp.Pdf
             /// <summary>
             /// Gets the KeysMeta for these keys.
             /// </summary>
-            public static DictionaryMeta Meta => _meta ??= CreateMeta(typeof(Keys));
+            internal static DictionaryMeta Meta => _meta ??= CreateMeta(typeof(Keys));
 
             static DictionaryMeta? _meta;
         }
