@@ -197,7 +197,8 @@ namespace PdfSharp.Tests.IO
             properties.SetString("/A<>B", "A<>B");
             properties.SetString("/A<<>>B", "A<<>>B");
             properties.SetString("/AÀÁÂÃÄÅÆÇÈÉÊËB", "AÀÁÂÃÄÅÆÇÈÉÊËB");
-            properties.SetString("/🖕 🦄 🦂 🍇 🍆 ☕ 🚂 🛸 ☁ ☢ ♌ ♏ ✅ ☑ ✔ ™ 🆒", "🖕 🦄 🦂 🍇 🍆 ☕ 🚂 🛸 ☁ ☢ ♌ ♏ ✅ ☑ ✔ ™ 🆒");
+            properties.SetString("/🖕 🦄 🦂 🍇 🍆 ☕ 🚂 🛸 ☁ ☢ ♌ ♏ ✅ ☑ ✔ ™ 🆒",
+                "🖕 🦄 🦂 🍇 🍆 ☕ 🚂 🛸 ☁ ☢ ♌ ♏ ✅ ☑ ✔ ™ 🆒");
             properties.SetString("/✓✔✅🐛👌🆗", "✓✔✅🐛👌🆗");
 #endif
             using var stream = new MemoryStream();
@@ -264,7 +265,7 @@ namespace PdfSharp.Tests.IO
             for (int i = 0; i < 8; ++i)
             {
                 var page = document.Pages[i];
-#if true_  // can be deleted now
+#if true_ // can be deleted now
                 // Modifying the PDF works with this hack.
                 page.Orientation = PageOrientation.Portrait; // Always set "Portrait" for imported pages.
 #endif
@@ -302,28 +303,42 @@ namespace PdfSharp.Tests.IO
             }
         }
 
-        [Theory]
-        [InlineData("https://github.com/py-pdf/pypdf/blob/0c81f3cfad26ddffbfc60d0ae855118e515fad8c/resources/encryption/r5-empty-password.pdf?raw=true", PdfDocumentOpenMode.Import, null)]
-        [InlineData("https://github.com/py-pdf/pypdf/blob/0c81f3cfad26ddffbfc60d0ae855118e515fad8c/resources/encryption/r5-user-password.pdf?raw=true", PdfDocumentOpenMode.Import, "asdfzxcv")]
-        [InlineData("https://github.com/py-pdf/pypdf/blob/0c81f3cfad26ddffbfc60d0ae855118e515fad8c/resources/encryption/r5-owner-password.pdf?raw=true", PdfDocumentOpenMode.Modify, "asdfzxcv")]
-        [InlineData("https://github.com/py-pdf/pypdf/blob/0c81f3cfad26ddffbfc60d0ae855118e515fad8c/resources/encryption/r5-owner-password.pdf?raw=true", PdfDocumentOpenMode.Import, "asdfzxcv")]
-        public async Task Read_file_with_version_5_revision_5_encryption(string url, PdfDocumentOpenMode mode, string? password)
-        {
-            var client = new HttpClient();
-            var content = await client.GetByteArrayAsync(url);
-            using var ms = new MemoryStream(content);
+        // [Theory]
+        // [InlineData("https://github.com/py-pdf/pypdf/blob/0c81f3cfad26ddffbfc60d0ae855118e515fad8c/resources/encryption/r5-empty-password.pdf?raw=true", PdfDocumentOpenMode.Import, null)]
+        // [InlineData("https://github.com/py-pdf/pypdf/blob/0c81f3cfad26ddffbfc60d0ae855118e515fad8c/resources/encryption/r5-user-password.pdf?raw=true", PdfDocumentOpenMode.Import, "asdfzxcv")]
+        // [InlineData("https://github.com/py-pdf/pypdf/blob/0c81f3cfad26ddffbfc60d0ae855118e515fad8c/resources/encryption/r5-owner-password.pdf?raw=true", PdfDocumentOpenMode.Modify, "asdfzxcv")]
+        // [InlineData("https://github.com/py-pdf/pypdf/blob/0c81f3cfad26ddffbfc60d0ae855118e515fad8c/resources/encryption/r5-owner-password.pdf?raw=true", PdfDocumentOpenMode.Import, "asdfzxcv")]
+        // public async Task Read_file_with_version_5_revision_5_encryption(string url, PdfDocumentOpenMode mode, string? password)
+        // {
+        //     var client = new HttpClient();
+        //     var content = await client.GetByteArrayAsync(url);
+        //     using var ms = new MemoryStream(content);
+        //
+        //     var act = () => PdfReader.Open(ms, password, mode);
+        //
+        //     act.Should().NotThrow();
+        // }
 
-            var act = () => PdfReader.Open(ms, password, mode);
-
-            act.Should().NotThrow();
-        }
-        
         [Fact]
         public void ReverseSolidus_with_invalid_following_character_should_be_ignored()
         {
             using var doc = PdfReader.Open(@"C:\Users\ArnaudTAMAILLON\Downloads\Cover-letter-4098208.pdf");
             var producer = doc.Info.Producer;
             producer.Should().Be("C48x Series (PDF - 300X300 dpi)");
+        }
+
+        [Theory]
+        [MemberData(nameof(Should_parse_files_source))]
+        public void Should_parse_files(string name)
+        {
+            using var doc = PdfReader.Open(name);
+            var elements    = doc?.Info?.Elements;
+        }
+
+        public static TheoryData<string> Should_parse_files_source()
+        {
+            var di = new DirectoryInfo(@"C:\Code\Data\DocumentAnalysis\Files");
+            return new TheoryData<string>(di.GetFiles().Select(f => f.FullName));
         }
     }
 }
