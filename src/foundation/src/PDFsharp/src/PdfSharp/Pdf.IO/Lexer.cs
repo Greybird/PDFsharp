@@ -610,17 +610,6 @@ namespace PdfSharp.Pdf.IO
                                         }
                                         ch = (char)n;
                                     }
-                                    else
-                                    {
-                                        // PDF 32000: "If the character following the REVERSE SOLIDUS is not one of those shown in Table 3, the REVERSE SOLIDUS shall be ignored."
-                                        // fyi: REVERSE SOLIDUS is a backslash
-                                        // What does that mean: "abc\qxyz" is "abcxyz" oder "abcqxyz"?
-                                        // #PRD Notify about unknown escape character.
-                                        // Debug.As-sert(false, "Not implemented; unknown escape character.");
-                                        // ParserDiagnostics.HandleUnexpectedCharacter(ch);
-                                        //_ = typeof(int);
-                                        goto RetryAfterSkipIllegalCharacter;
-                                    }
                                     break;
                             }
                             break;

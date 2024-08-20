@@ -298,5 +298,13 @@ namespace PdfSharp.Tests.IO
                 }
             }
         }
+
+        [Fact]
+        public void ReverseSolidus_with_invalid_following_character_should_be_ignored()
+        {
+            using var doc = PdfReader.Open(@"C:\Users\ArnaudTAMAILLON\Downloads\Cover-letter-4098208.pdf");
+            var producer = doc.Info.Producer;
+            producer.Should().Be("C48x Series (PDF - 300X300 dpi)");
+        }
     }
 }
