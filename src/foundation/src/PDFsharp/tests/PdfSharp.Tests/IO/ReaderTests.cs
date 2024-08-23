@@ -331,7 +331,7 @@ namespace PdfSharp.Tests.IO
         [MemberData(nameof(Should_parse_files_source))]
         public void Should_parse_files(string name)
         {
-            using var doc = PdfReader.Open(name);
+            using var doc = PdfReader.Open(name, PdfDocumentOpenMode.Import);
             var elements    = doc?.Info?.Elements;
         }
 
