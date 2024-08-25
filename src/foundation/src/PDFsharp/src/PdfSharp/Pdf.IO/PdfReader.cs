@@ -315,18 +315,23 @@ namespace PdfSharp.Pdf.IO
                 // Reference.Values available by now: All trailers and cross-reference streams (which are not encrypted by definition). 
 
                 // 2. Read the encryption dictionary, if existing.
-                var encryptPdfItem = _document.Trailer!.Elements[PdfTrailer.Keys.Encrypt];
-                if (encryptPdfItem is PdfReference xrefEncrypt)
+                var trailer = _document.Trailer;
+                while (trailer != null)
                 {
-                    var encrypt = parser.ReadIndirectObject(xrefEncrypt, null, true);
-                    encrypt.Reference = xrefEncrypt;
-                    xrefEncrypt.Value = encrypt;
+                    var encryptPdfItem = trailer.Elements[PdfTrailer.Keys.Encrypt];
+                    if (encryptPdfItem is PdfReference xrefEncrypt)
+                    {
+                        var encrypt = parser.ReadIndirectObject(xrefEncrypt, null, true);
+                        encrypt.Reference = xrefEncrypt;
+                        xrefEncrypt.Value = encrypt;
 
-                    _document.SecurityHandler.PrepareForReading();
-                }
-                else if (encryptPdfItem is PdfDictionary)
-                {
-                    _document.SecurityHandler.PrepareForReading();
+                        trailer.SecurityHandler.PrepareForReading();
+                    }
+                    else if (encryptPdfItem is PdfDictionary)
+                    {
+                        trailer.SecurityHandler.PrepareForReading();
+                    }
+                    trailer = trailer.PreviousTrailer;
                 }
                 // References available by now: All references to file-level objects.
                 // Reference.Values available by now: All trailers and cross-reference streams and the encryption dictionary.
