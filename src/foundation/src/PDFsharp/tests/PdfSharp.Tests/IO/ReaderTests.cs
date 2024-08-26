@@ -379,10 +379,19 @@ namespace PdfSharp.Tests.IO
         }
 
         [Fact]
-        public void Test()
+        public void Test_Incorrect_indirect_object_declaration()
         {
             const string path =
                 @"C:\Code\Data\DocumentAnalysis\260820240741\Files\0a6e76ef-adf3-4832-af9a-1a192ab0540e.pdf";
+            using var doc = PdfReader.Open(path, PdfDocumentOpenMode.Import);
+            var elements    = doc?.Info?.Elements;
+        }
+
+        [Fact]
+        public void Test_references_in_indirected_references()
+        {
+            const string path =
+                @"C:\Code\Data\DocumentAnalysis\260820240741\Files\0b12fd65-95b6-4ec2-af5f-7f0e64077ebc.pdf";
             using var doc = PdfReader.Open(path, PdfDocumentOpenMode.Import);
             var elements    = doc?.Info?.Elements;
         }

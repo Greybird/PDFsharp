@@ -5,6 +5,7 @@ using PdfSharp.Internal;
 using PdfSharp.Logging;
 using PdfSharp.Pdf.Advanced;
 using Microsoft.Extensions.Logging;
+using PdfSharp.Pdf.Structure;
 
 namespace PdfSharp.Pdf.IO
 {
@@ -214,7 +215,8 @@ namespace PdfSharp.Pdf.IO
                 ReadSymbol(Symbol.Obj);
 
             bool checkForStream = false; // Set true if parsing dictionary.
-            var symbol = ScanNextToken();
+            var positionBeforeSymbol = _lexer.Position;
+            var symbol = ScanNextToken(true);
             switch (symbol)
             {
                 case Symbol.BeginArray:
@@ -308,6 +310,14 @@ namespace PdfSharp.Pdf.IO
                     // Should not come here anymore.
                     ParserDiagnostics.HandleUnexpectedToken(_lexer.Token, _lexer.DumpNeighborhoodOfPosition());
                     break;
+
+                case Symbol.ObjRef:
+                    (int referencedObjectNumber, int referencedGenerationNumber) = _lexer.TokenToObjectID;
+                    var referencedObjectID = new PdfObjectID(referencedObjectNumber, referencedGenerationNumber);
+                    var reference = new PdfObjectReference(_document);
+                    reference.SetObjectID(objectNumber, generationNumber);
+                    reference.Elements.Add(PdfObjectReference.Keys.Obj, new PdfReference(referencedObjectID, positionBeforeSymbol));
+                    return reference;
 
                 default:
                     // Should not come here anymore.
