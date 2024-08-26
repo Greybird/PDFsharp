@@ -347,6 +347,7 @@ namespace PdfSharp.Pdf.IO
             if (fromObjectStream is false && symbol != Symbol.EndObj)
             {
                 var missingEndObj = false;
+                var forwardEndObj = false;
                 if (symbol is Symbol.Integer)
                 {
                     symbol = ScanNextToken();
@@ -364,8 +365,16 @@ namespace PdfSharp.Pdf.IO
                 {
                     missingEndObj = true;
                 }
+                else if (symbol is Symbol.EndDictionary)
+                {
+                    symbol = ScanNextToken();
+                    if (symbol == Symbol.EndObj)
+                    {
+                        forwardEndObj = true;
+                    }
+                }
 
-                if (!missingEndObj)
+                if (!missingEndObj && !forwardEndObj)
                 {
                     ParserDiagnostics.ThrowParserException(PsMsgs.UnexpectedToken(_lexer.Token));
                 }
