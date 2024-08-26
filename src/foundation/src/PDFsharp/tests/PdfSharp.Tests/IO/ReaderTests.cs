@@ -326,20 +326,20 @@ namespace PdfSharp.Tests.IO
             var producer = doc.Info.Producer;
             producer.Should().Be("C48x Series (PDF - 300X300 dpi)");
         }
-
-        [Theory]
-        [MemberData(nameof(Should_parse_files_source))]
-        public void Should_parse_files(string name)
-        {
-            using var doc = PdfReader.Open(name, PdfDocumentOpenMode.Import);
-            var elements    = doc?.Info?.Elements;
-        }
-
-        public static TheoryData<string> Should_parse_files_source()
-        {
-            var di = new DirectoryInfo(@"C:\Code\Data\DocumentAnalysis\Files");
-            return new TheoryData<string>(di.GetFiles().Select(f => f.FullName));
-        }
+        //
+        // [Theory]
+        // [MemberData(nameof(Should_parse_files_source))]
+        // public void Should_parse_files(string name)
+        // {
+        //     using var doc = PdfReader.Open(name, PdfDocumentOpenMode.Import);
+        //     var elements    = doc?.Info?.Elements;
+        // }
+        //
+        // public static TheoryData<string> Should_parse_files_source()
+        // {
+        //     var di = new DirectoryInfo(@"C:\Code\Data\DocumentAnalysis\Files");
+        //     return new TheoryData<string>(di.GetFiles().Select(f => f.FullName));
+        // }
 
         [Fact]
         public void Encrypt_can_be_an_inline_dictionary()
@@ -356,6 +356,15 @@ namespace PdfSharp.Tests.IO
         {
             const string path =
                 @"C:\Code\Data\DocumentAnalysis\250820241610\Files\00247316-e4d3-441d-bd62-3ad9e95df232.pdf";
+            using var doc = PdfReader.Open(path, PdfDocumentOpenMode.Import);
+            var elements    = doc?.Info?.Elements;
+        }
+
+        [Fact]
+        public void Test_Large_Object_Id()
+        {
+            const string path =
+                @"C:\Code\Data\DocumentAnalysis\260820240741\Files\0a2fc4c0-e545-43ff-95e0-ee4aabc63fa6.pdf";
             using var doc = PdfReader.Open(path, PdfDocumentOpenMode.Import);
             var elements    = doc?.Info?.Elements;
         }

@@ -337,7 +337,7 @@ namespace PdfSharp.Pdf.IO
 
             // Can the scanned number be the first part of an object reference?
             if (testForObjectReference && period is false
-                && totalDigits <= maxDigitsForObjectNumber
+                //&& totalDigits <= maxDigitsForObjectNumber
                 && IsWhiteSpace(_currChar))
             {
 #if DEBUG
@@ -349,6 +349,10 @@ namespace PdfSharp.Pdf.IO
 #if DEBUG
                     LexerHelper.TryCheckReferenceSuccessCount++;
 #endif
+                    if (value > int.MaxValue)
+                    {
+                        value = int.MaxValue;
+                    }
                     _tokenAsObjectID = ((int)value, gen);
                     return Symbol.ObjRef;
                 }
