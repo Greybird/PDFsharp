@@ -350,5 +350,14 @@ namespace PdfSharp.Tests.IO
             act = () => PdfReader.Open(path, "asdfzxcv", PdfDocumentOpenMode.Modify);
             act.Should().NotThrow();
         }
+
+        [Fact]
+        public void Test_Comma_In_Real()
+        {
+            const string path =
+                @"C:\Code\Data\DocumentAnalysis\250820241610\Files\00247316-e4d3-441d-bd62-3ad9e95df232.pdf";
+            using var doc = PdfReader.Open(path, PdfDocumentOpenMode.Import);
+            var elements    = doc?.Info?.Elements;
+        }
     }
 }

@@ -126,6 +126,7 @@ namespace PdfSharp.Pdf.IO
                     Debug.Assert(Symbol is Symbol.Integer or Symbol.LongInteger or Symbol.Real or Symbol.ObjRef);
                     return Symbol;
 
+                case ',':
                 case '.':
                     // Cannot be an object reference if a decimal point was found.
                     Symbol = ScanNumber(false);
@@ -279,7 +280,7 @@ namespace PdfSharp.Pdf.IO
             var period = false;
             var negative = false;
             var ch = _currChar;
-            Debug.Assert(ch is '+' or '-' or '.' or (>= '0' and <= '9'));
+            Debug.Assert(ch is '+' or '-' or '.' or ',' or (>= '0' and <= '9'));
 
             // If first char is not a digit, it cannot be an object reference.
             if (testForObjectReference && ch is not (>= '0' and <= '9'))
@@ -298,7 +299,7 @@ namespace PdfSharp.Pdf.IO
                 ch = ScanNextChar(true);
 
                 // Never saw this in any PDF file, but possible.
-                if (ch is not ('.' or >= '0' and <= '9'))
+                if (ch is not ('.' or ',' or >= '0' and <= '9'))
                 {
                     PdfSharpLogHost.Logger.LogError("+/- not followed by a number.");
                 }
@@ -320,14 +321,14 @@ namespace PdfSharp.Pdf.IO
                     if (period)
                         ++decimalDigits;
                 }
-                else if (ch == '.')
+                else if (ch == '.' || ch == ',')
                 {
                     // More than one period?
                     if (period)
                         ContentReaderDiagnostics.ThrowContentReaderException("More than one period in number.");
 
                     period = true;
-                    _token.Append(ch);
+                    _token.Append('.');
                 }
                 else
                     break;
