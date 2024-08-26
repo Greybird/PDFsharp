@@ -16,6 +16,9 @@ using PdfSharp.Pdf.IO;
 using PdfSharp.Quality;
 using Xunit;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
+using PdfSharp.Logging;
+using Xunit.Abstractions;
 
 namespace PdfSharp.Tests.IO
 {
@@ -392,6 +395,15 @@ namespace PdfSharp.Tests.IO
         {
             const string path =
                 @"C:\Code\Data\DocumentAnalysis\260820240741\Files\0b12fd65-95b6-4ec2-af5f-7f0e64077ebc.pdf";
+            using var doc = PdfReader.Open(path, PdfDocumentOpenMode.Import);
+            var elements    = doc?.Info?.Elements;
+        }
+
+        [Fact]
+        public void Test_Trailer_Prev_Zero()
+        {
+            const string path =
+                @"C:\Code\Data\DocumentAnalysis\260820240741\Files\0be07d7c-6eb7-44db-aac7-2d314b39f09f.pdf";
             using var doc = PdfReader.Open(path, PdfDocumentOpenMode.Import);
             var elements    = doc?.Info?.Elements;
         }

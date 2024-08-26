@@ -1247,22 +1247,71 @@ namespace PdfSharp.Pdf.IO
         {
             SizeType length = _lexer.PdfLength;
 
+            var trailerPosition = GetStartXRefLocationBefore(length);
+            if (trailerPosition == -1)
+                throw new Exception("The StartXRef table could not be found, the file cannot be opened.");
+            _lexer.Position = trailerPosition;
+
+            // Read all trailers.
+            PdfTrailer? newerTrailer = null;
+            while (true)
+            {
+                ReadSymbol(Symbol.StartXRef);
+                // Read position behind 'startxref'.
+                _lexer.Position = ReadSize();
+
+                var trailer = ReadXRefTableAndTrailer(_document.IrefTable);
+
+                // Return the first found trailer, which is the one 'startxref' points to.
+                // This is the current trailer, even for incrementally updated files.
+                if (_document.Trailer == null!)
+                    _document.Trailer = trailer ?? NRT.ThrowOnNull<PdfTrailer>();
+
+                // Add previous trailer to the newerTrailer, if existing.
+                if (newerTrailer != null)
+                    newerTrailer.PreviousTrailer = trailer;
+
+                // Break if there is no previous trailer.
+                int? prev = trailer?.Elements.GetInteger(PdfTrailer.Keys.Prev);
+                if (prev == null)
+                    break;
+                if (prev == 0)
+                {
+                    trailerPosition = GetStartXRefLocationBefore(trailerPosition);
+                    if (trailerPosition == -1)
+                    {
+                        break;
+                    }
+
+                    prev = (int) trailerPosition;
+                }
+
+                // Continue loading previous trailer and cache this one as the newerTrailer to add its previous trailer.
+                _lexer.Position = prev.Value;
+                newerTrailer = trailer;
+            }
+            return _document.Trailer;
+        }
+
+        private SizeType GetStartXRefLocationBefore(SizeType length)
+        {
             // Implementation note 18 Appendix  H:
             // Acrobat viewers require only that the %%EOF marker appear somewhere within the last 1024 bytes of the file.
+            SizeType position;
             int idx;
             if (length < 1030)
             {
                 // Reading the final 30 bytes should work for all files. But often it does not.
                 string trail = _lexer.ScanRawString(length - 31, 30); //lexer.Pdf.Substring(length - 30);
                 idx = trail.LastIndexOf("startxref", StringComparison.Ordinal);
-                _lexer.Position = length - 31 + idx;
+                position = length - 31 + idx;
             }
             else
             {
                 // For larger files we read 1 kiB - in most cases we find 'startxref' in that range.
                 string trail = _lexer.ScanRawString(length - 1031, 1030);
                 idx = trail.LastIndexOf("startxref", StringComparison.Ordinal);
-                _lexer.Position = length - 1031 + idx;
+                position = length - 1031 + idx;
             }
 
             // SAP sometimes creates files with a size of several MByte and places 'startxref' somewhere in the middle...
@@ -1280,41 +1329,10 @@ namespace PdfSharp.Pdf.IO
 
                 idx = trail.LastIndexOf("startxref", StringComparison.Ordinal);
 
-                if (idx == -1)
-                    throw new Exception("The StartXRef table could not be found, the file cannot be opened.");
-
-                _lexer.Position = idx;
+                position = idx;
             }
 
-            ReadSymbol(Symbol.StartXRef);
-            // Read position behind 'startxref'.
-            _lexer.Position = ReadSize();
-
-            // Read all trailers.
-            PdfTrailer? newerTrailer = null;
-            while (true)
-            {
-                var trailer = ReadXRefTableAndTrailer(_document.IrefTable);
-
-                // Return the first found trailer, which is the one 'startxref' points to.
-                // This is the current trailer, even for incrementally updated files.
-                if (_document.Trailer == null!)
-                    _document.Trailer = trailer ?? NRT.ThrowOnNull<PdfTrailer>();
-
-                // Add previous trailer to the newerTrailer, if existing.
-                if (newerTrailer != null)
-                    newerTrailer.PreviousTrailer = trailer;
-
-                // Break if there is no previous trailer.
-                int prev = trailer != null ? trailer.Elements.GetInteger(PdfTrailer.Keys.Prev) : 0;
-                if (prev == 0)
-                    break;
-
-                // Continue loading previous trailer and cache this one as the newerTrailer to add its previous trailer.
-                _lexer.Position = prev;
-                newerTrailer = trailer;
-            }
-            return _document.Trailer;
+            return position;
         }
 
         /// <summary>
