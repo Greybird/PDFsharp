@@ -147,11 +147,43 @@ namespace PdfSharp.Pdf.IO
                 case Chars.EOF:
                     return Symbol = Symbol.Eof;
 
+                case '\xA2':
+                    var position = Position;
+                    Symbol = ScanOpenTextExStreamStreamKeyword();
+                    if (Symbol == Symbol.None)
+                    {
+                        Position = position;
+                        // just skip over unexpected character
+                        ScanNextChar(true);
+                        goto TryAgain;
+                    }
+
+                    return Symbol;
+                    
                 default:
                     // just skip over unexpected character
                     ScanNextChar(true);
                     goto TryAgain;
             }
+        }
+
+        // OpenText/HP Exstream, for some reason, use a very strange byte array as replacement for stream 
+        // in old versions...
+        private Symbol ScanOpenTextExStreamStreamKeyword()
+        {
+            char[] expected = ['\xA2', '\xA3', '\x99', '\x85', '\x81', '\x94'];
+            char ch = _currChar;
+            for (int i = 0; i < expected.Length ; i++)
+            {
+                if (ch != expected[i])
+                {
+                    return Symbol.None;
+                }
+                ch = ScanNextChar(false);
+            }
+
+            _token.Append("stream");
+            return Symbol.BeginStream;
         }
 
         /// <summary>

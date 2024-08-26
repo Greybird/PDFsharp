@@ -425,5 +425,14 @@ namespace PdfSharp.Tests.IO
             using var doc = PdfReader.Open(path, PdfDocumentOpenMode.Import);
             var elements    = doc?.Info?.Elements;
         }
+
+        [Fact]
+        public void Test_Exstram_incorrect_beginstream_token()
+        {
+            const string path =
+                @"C:\Code\Data\DocumentAnalysis\260820240741\Files\0ce4dc82-5b48-4597-944f-8ca39e209b26.pdf";
+            using var doc = PdfReader.Open(path, PdfDocumentOpenMode.Import);
+            var elements    = doc?.Info?.Elements;
+        }
     }
 }
