@@ -33,7 +33,7 @@ namespace PdfSharp.Pdf
         /// <param name="generationNumber">The generation number.</param>
         public PdfObjectID(int objectNumber, int generationNumber)
         {
-            Debug.Assert(objectNumber >= 1, "Object number out of range.");
+            Debug.Assert(objectNumber >= 0, "Object number out of range.");
             //Debug.Assert(generationNumber >= 0 && generationNumber <= 65535, "Generation number out of range.");
 #if DEBUG_
             // iText creates generation numbers with a value of 65536... 
