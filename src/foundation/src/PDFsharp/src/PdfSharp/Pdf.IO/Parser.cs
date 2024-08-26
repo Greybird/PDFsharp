@@ -793,6 +793,9 @@ namespace PdfSharp.Pdf.IO
                     //case Symbol.Trailer:
                     //case Symbol.StartXRef:
                     //case Symbol.Eof:
+                    case Symbol.EndObj:
+                    case Symbol.EndStream:
+                        return items;
                     default:
                         ParserDiagnostics.HandleUnexpectedToken(_lexer.Token, _lexer.DumpNeighborhoodOfPosition());
                         SkipCharsUntil(stopSymbol);
