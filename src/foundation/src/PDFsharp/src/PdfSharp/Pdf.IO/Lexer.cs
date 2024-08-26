@@ -835,14 +835,14 @@ namespace PdfSharp.Pdf.IO
         }
 
         /// <summary>
-        /// Gets the effective length of a stream on the basis of the position of 'endstream'.
+        /// Gets the effective length of a stream on the basis of the position of 'endstream' or 'endobj'.
         /// Call this function if 'endstream' was not found at the end of a stream content after
         /// it is parsed.
         /// </summary>
         /// <param name="start">The position behind 'stream' symbol in dictionary.</param>
         /// <param name="searchLength">The range to search for 'endstream'.</param>
         /// <param name="suppressObjectOrderExceptions">Suppresses exceptions that may be caused by not yet available objects.</param>
-        /// <returns>The real length of the stream when 'endstream' was found.</returns>
+        /// <returns>The real length of the stream when 'endstream' or 'endobj' was found.</returns>
         public int DetermineStreamLength(SizeType start, int searchLength, SuppressExceptions? suppressObjectOrderExceptions = null)
         {
 #if DEBUG_
@@ -850,39 +850,46 @@ namespace PdfSharp.Pdf.IO
                 _ = sizeof(int);
 #endif
             var firstStart = start;
-            while (start < _pdfLength)
+            foreach (var endKeyworkd in new[] {"endstream", "endobj"})
             {
-                var rawString = RandomReadRawString(start, Math.Min(searchLength, (int)(_pdfLength - start)));
-
-                // When we come here, we have either an invalid or no \Length entry.
-                // Best we can do is to consider all byte before 'endstream' are part of the stream content.
-                // In case the stream is zipped, this is no problem. In case the stream is encrypted
-                // it would be a serious problem. But we wait if this really happens.
-                int idxEndStream = rawString.LastIndexOf("endstream", StringComparison.Ordinal);
-                if (idxEndStream >= 0)
+                start = firstStart;
+                while (start < _pdfLength)
                 {
-                    // The spec says (7.3.8, Stream Objects):
-                    // "There should be an end-of-line marker after the data and before endstream;
-                    // this marker shall not be included in the stream length"
+                    var rawString = RandomReadRawString(start, Math.Min(searchLength, (int)(_pdfLength - start)));
 
-                    // check bytes before the keyword for possible CRLF or LF or CR
-                    // (CR alone SHALL NOT be used but check it anyway)
-                    // sanity check, should always pass since we SHOULD have read the "stream" keyword before we came here
-                    if (start + idxEndStream >= 2)
+                    // When we come here, we have either an invalid or no \Length entry.
+                    // Best we can do is to consider all byte before 'endstream' are part of the stream content.
+                    // In case the stream is zipped, this is no problem. In case the stream is encrypted
+                    // it would be a serious problem. But we wait if this really happens.
+                
+                    int idxEndKeywork = rawString.LastIndexOf(endKeyworkd, StringComparison.Ordinal);
+                    if (idxEndKeywork >= 0)
                     {
-                        _pdfStream.Position = start + idxEndStream - 2;
-                        var b1 = _pdfStream.ReadByte();
-                        var b2 = _pdfStream.ReadByte();
-                        if (b2 == '\n' || b2 == '\r')   // possible CRLF or single LF or single CR
+                        // The spec says (7.3.8, Stream Objects):
+                        // "There should be an end-of-line marker after the data and before endstream;
+                        // this marker shall not be included in the stream length"
+
+                        // check bytes before the keyword for possible CRLF or LF or CR
+                        // (CR alone SHALL NOT be used but check it anyway)
+                        // sanity check, should always pass since we SHOULD have read the "stream" keyword before we came here
+                        if (start + idxEndKeywork >= 2)
                         {
-                            idxEndStream--;
-                            if (b1 == '\r' && b2 != '\r')   // handle CRLF but not CRCR
-                                idxEndStream--;
+                            _pdfStream.Position = start + idxEndKeywork - 2;
+                            var b1 = _pdfStream.ReadByte();
+                            var b2 = _pdfStream.ReadByte();
+                            if (b2 == '\n' || b2 == '\r') // possible CRLF or single LF or single CR
+                            {
+                                idxEndKeywork--;
+                                if (b1 == '\r' && b2 != '\r') // handle CRLF but not CRCR
+                                    idxEndKeywork--;
+                            }
                         }
+
+                        return (int)(start - firstStart + idxEndKeywork);
                     }
-                    return (int)(start - firstStart + idxEndStream);
+
+                    start += Math.Max(1, searchLength - endKeyworkd.Length - 1);
                 }
-                start += Math.Max(1, searchLength - "endstream".Length - 1);
             }
             SuppressExceptions.HandleError(suppressObjectOrderExceptions, () => throw TH.ObjectNotAvailableException_CannotRetrieveStreamLength());
             return -1;
@@ -904,6 +911,20 @@ namespace PdfSharp.Pdf.IO
                 Chars.CR when _nextChar == 'e' => TryScanLiterally("\rendstream"),
                 Chars.LF when _nextChar == 'e' => TryScanLiterally("\nendstream"),
                 Chars.CR when _nextChar == Chars.LF => TryScanLiterally("\r\nendstream"),
+                _ => false
+            };
+        }
+
+        public bool TryScanEndObjSymbol()
+        {
+            return _currChar switch
+            {
+                // This case is not recommended by specs, but valid PDF.
+                'e' when _nextChar == 'n' => TryScanLiterally("endobj"),
+                // These are the valid by specs cases.
+                Chars.CR when _nextChar == 'e' => TryScanLiterally("\rendobj"),
+                Chars.LF when _nextChar == 'e' => TryScanLiterally("\nendobj"),
+                Chars.CR when _nextChar == Chars.LF => TryScanLiterally("\r\nendobj"),
                 _ => false
             };
         }

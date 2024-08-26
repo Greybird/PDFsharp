@@ -584,7 +584,7 @@ namespace PdfSharp.Pdf.IO
                 _ = typeof(int);
 #endif
             // If PDF is well-formed, TryScanEndStreamSymbol will succeed.
-            if (_lexer.TryScanEndStreamSymbol())
+            if (_lexer.TryScanEndStreamSymbol() || _lexer.TryScanEndObjSymbol())
                 return true;
 
             // #INVALID_PDF
