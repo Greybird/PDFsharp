@@ -333,8 +333,34 @@ namespace PdfSharp.Pdf.IO
                 // Should scan 'endobj'.
                 symbol = ScanNextToken();
             }
+
             if (fromObjectStream is false && symbol != Symbol.EndObj)
-                ParserDiagnostics.ThrowParserException(PsMsgs.UnexpectedToken(_lexer.Token));
+            {
+                var missingEndObj = false;
+                if (symbol is Symbol.Integer)
+                {
+                    symbol = ScanNextToken();
+                    if (symbol is Symbol.Integer)
+                    {
+                        symbol = ScanNextToken();
+                        if (symbol == Symbol.Obj)
+                        {
+                            // bug in the format, the endobj has been ommited.
+                            missingEndObj = true;
+                        }
+                    }
+                }
+                else if (symbol is Symbol.XRef)
+                {
+                    missingEndObj = true;
+                }
+
+                if (!missingEndObj)
+                {
+                    ParserDiagnostics.ThrowParserException(PsMsgs.UnexpectedToken(_lexer.Token));
+                }
+            }
+                
             return pdfObject ?? NRT.ThrowOnNull<PdfObject>();
         }
 
